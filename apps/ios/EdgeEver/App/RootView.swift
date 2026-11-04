@@ -8,11 +8,7 @@ struct RootView: View {
             if env.session.isLoading {
                 ProgressView(env.preferences.t("启动中…", en: "Starting…", ja: "起動しています…", pl: "Uruchamianie…"))
             } else if env.session.isSignedIn {
-                if env.session.isMfaRebindRequired {
-                    ForcedTotpRebindView()
-                } else {
-                    WorkspaceView()
-                }
+                WorkspaceView()
             } else {
                 LoginView()
             }

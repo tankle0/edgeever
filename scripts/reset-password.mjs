@@ -53,22 +53,6 @@ export const buildUserLookupSql = (username) =>
 export const buildPasswordHashLookupSql = (username) =>
   `SELECT password_hash FROM users WHERE username = ${sqlString(username)} AND is_disabled = 0 LIMIT 1`;
 
-export const buildTotpStatusSql = (username) =>
-  `SELECT enabled_at FROM user_totp WHERE user_id = (
-  SELECT id FROM users WHERE username = ${sqlString(username)} AND is_disabled = 0 LIMIT 1
-) AND enabled_at IS NOT NULL LIMIT 1`;
-
-// Mirrors MFA_PASSWORD_HASH_ALGORITHM in apps/api/src/auth-crypto.ts: an account
-// with TOTP enabled keeps its hash under the "-mfa" tag so a backend that predates
-// TOTP fails closed for it after a rollback. A reset must not drop that tag.
-const PLAIN_HASH_ALGORITHM = "pbkdf2-sha256";
-const MFA_HASH_ALGORITHM = "pbkdf2-sha256-mfa";
-
-export const passwordHashForReset = (passwordHash, totpEnabled) =>
-  totpEnabled && passwordHash.startsWith(`${PLAIN_HASH_ALGORITHM}$`)
-    ? `${MFA_HASH_ALGORITHM}${passwordHash.slice(PLAIN_HASH_ALGORITHM.length)}`
-    : passwordHash;
-
 export const buildPasswordResetSql = (username, passwordHash) => {
   const escapedUsername = sqlString(username);
   const escapedHash = sqlString(passwordHash);
@@ -138,28 +122,11 @@ const main = () => {
     throw new Error(`Enabled user not found: ${options.username}`);
   }
 
-  // Keep the TOTP tag on the new hash. The table does not exist on a database
-  // that has not run migration 0088 yet; treat that as "not enabled".
-  let totpEnabled = false;
-  try {
-    totpEnabled = parseD1Rows(runWrangler([
-      "d1",
-      "execute",
-      "DB",
-      targetFlag,
-      "--command",
-      buildTotpStatusSql(options.username),
-      "--json",
-    ])).length > 0;
-  } catch {
-    totpEnabled = false;
-  }
-
   const temporaryDirectory = mkdtempSync(join(tmpdir(), "edgeever-password-reset-"));
   const sqlPath = join(temporaryDirectory, "reset-password.sql");
 
   try {
-    const passwordHash = passwordHashForReset(createPasswordHash(password), totpEnabled);
+    const passwordHash = createPasswordHash(password);
     writeFileSync(sqlPath, buildPasswordResetSql(options.username, passwordHash), {
       mode: 0o600,
     });
@@ -182,10 +149,7 @@ const main = () => {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }
 
-  console.log(
-    `Password reset for ${options.username} (${options.target}); existing sessions revoked.`
-    + (totpEnabled ? " Two-factor authentication stays enabled." : ""),
-  );
+  console.log(`Password reset for ${options.username} (${options.target}); existing sessions revoked.`);
 };
 
 if (import.meta.main) {

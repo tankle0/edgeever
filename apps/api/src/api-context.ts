@@ -54,8 +54,6 @@ export type AuthContext = {
   role: "owner" | "member";
   sessionId?: string;
   tokenId?: string;
-  /** Recovery-code session that must rebind TOTP before any other access. */
-  mfaRestricted?: boolean;
 };
 
 export type AuditActor = {

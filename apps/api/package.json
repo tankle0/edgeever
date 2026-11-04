@@ -5,7 +5,6 @@
   "type": "module",
   "dependencies": {
     "@edgeever/public-network": "workspace:*",
-    "content-type": "3.1.1",
-    "otpauth": "9.5.2"
+    "content-type": "3.1.1"
   }
 }

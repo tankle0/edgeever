@@ -1943,19 +1943,6 @@ const RichEditorPane = ({
       );
       if (clickedEmptyCanvas) {
         editorCanvasInteractionVersionRef.current += 1;
-        if (
-          target === event.currentTarget &&
-          !isMobileViewport &&
-          !effectiveReadOnly &&
-          isEditorReady(editor) &&
-          editor.isEditable &&
-          editor.isEmpty &&
-          proseMirror &&
-          event.clientY >= proseMirror.getBoundingClientRect().bottom
-        ) {
-          editor.view.focus();
-          return;
-        }
         // This handler runs in capture phase, before ProseMirror translates the
         // click coordinates into a selection. In a desktop WebView that later
         // selection can map the empty area beside/below a block image back onto
@@ -1972,7 +1959,7 @@ const RichEditorPane = ({
         });
       }
     }
-  }, [editor, effectiveReadOnly, isMobileViewport, onOpenMemo, showEditorLinkOpenHint]);
+  }, [editor, onOpenMemo, showEditorLinkOpenHint]);
 
   const handleEditorFocusCapture = useCallback((event: ReactFocusEvent<HTMLDivElement>) => {
     if (showAttachmentMenu(event.target)) return;
