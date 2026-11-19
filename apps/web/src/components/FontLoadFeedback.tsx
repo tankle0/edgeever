@@ -13,7 +13,7 @@ export const FontLoadIcon = ({ status }: { status: FontLoadStatus }) => {
 export const FontLoadFeedback = ({ status, onRetry, template = false }: { status: FontLoadStatus; onRetry: () => void; template?: boolean }) => {
   const { t } = useTranslation();
   if (status === "idle" || status === "ready") return null;
-  return <div className="flex min-h-6 items-center gap-1.5 text-xs text-slate-500">
+  return <div data-font-load-feedback="" className="flex min-h-6 items-center gap-1.5 text-xs text-slate-500">
     <span role="status" aria-live="polite" className="flex items-center gap-1.5">
       <FontLoadIcon status={status} />
       {t(`fontLoad.${template ? status === "error" ? "templateFallback" : "templateLoading" : status}`)}
