@@ -7,6 +7,22 @@ const createFontWatcher = (ui = false) => {
   const state = createFontLoadState();
   let stop: (() => void) | undefined;
   let retryCurrent: (() => void) | undefined;
+  const readText = () => {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          return node.parentElement?.closest("[data-font-load-feedback], [data-radix-popper-content-wrapper]")
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT;
+        },
+      },
+    );
+    const chunks: string[] = [];
+    while (walker.nextNode()) chunks.push(walker.currentNode.textContent ?? "");
+    return chunks.join("");
+  };
   return {
     state,
     retry: () => retryCurrent?.(),
@@ -21,7 +37,7 @@ const createFontWatcher = (ui = false) => {
       let last = "";
       const refresh = () => {
         if (!active) return;
-        const text = ui ? document.body.textContent ?? "" : Array.from(document.querySelectorAll<HTMLElement>(".edgeever-editor .ProseMirror, .edgeever-mobile-tiptap-content, .edgeever-editor textarea, .edgeever-editor .cm-content"))
+        const text = ui ? readText() : Array.from(document.querySelectorAll<HTMLElement>(".edgeever-editor .ProseMirror, .edgeever-mobile-tiptap-content, .edgeever-editor textarea, .edgeever-editor .cm-content"))
           .map(node => node instanceof HTMLTextAreaElement ? node.value : node.textContent ?? "").join(" ");
         const characters = Array.from(new Set(Array.from(text))).sort().join("");
         if (characters === last && state.getSnapshot() !== "idle") return;
